@@ -3,15 +3,12 @@
 # -prevrsa last commit to master
  
 #read command line args
-while getopts l:p: option
-do
-        case "${option}"
-        in
-                l) LCOMMIT=${OPTARG};;
-                p) PREVRSA=${OPTARG};;
-        esac
-done
- 
+echo `git rev-parse @`
+echo `git rev-parse @~`
+
+LCOMMIT=`git rev-parse @`
+PREVRSA=`git rev-parse @~`
+
 echo Last Commit: $LCOMMIT
 echo Previous Commit: $PREVRSA
  
