@@ -26,7 +26,12 @@ echo changing directoy to src
 cp package.xml{,.bak} &&
 echo Backing up package.xml to package.xml.bak
  
-NEWPKGXML=$(<packageBase.xml) echo $NEWPKGXML > package.xml
+read -d '' NEWPKGXML <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+</Package>
+EOF
+echo $NEWPKGXML > package.xml
 echo List of changes
 echo DIFF: `git diff-tree --no-commit-id --name-only --diff-filter=ACMRTUXB -t -r $PREVRSA $LCOMMIT`
  
@@ -35,17 +40,23 @@ while read -r CFILE; do
  
         if [[ $CFILE == *"src/"*"."* ]]
         then
-                tar cf - "../$CFILE"* | (cd ../$DIRDEPLOY; tar xf -)
+				pattern="salesforce-ant-migration-tool/"
+				FINALFILE=${CFILE/$pattern/}
+				echo tar filess "../$FINALFILE"
+                tar cf - "../$FINALFILE"* | (cd ../$DIRDEPLOY; tar xf -)
         fi
         if [[ $CFILE == *"-meta.xml" ]]
         then
-                ADDFILE=$CFILE
+                pattern="salesforce-ant-migration-tool/"
+				ADDFILE=${CFILE/$pattern/}
                 ADDFILE="${ADDFILE%-meta.xml*}"
                 tar cf - ../$ADDFILE | (cd ../$DIRDEPLOY; tar xf -)
         fi
         if [[ $CFILE == *"/aura/"*"."* ]]
         then
-                DIR=$(dirname "$CFILE")
+				pattern="salesforce-ant-migration-tool/"
+				FINALFILE=${CFILE/$pattern/}
+                DIR=$(dirname "$FINALFILE")
                 tar cf - ../$DIR | (cd ../$DIRDEPLOY; tar xf -)
         fi
  
@@ -117,8 +128,10 @@ while read -r CFILE; do
  
                 if grep -Fq "<name>$TYPENAME</name>" package.xml
                 then
+						echo "$TYPENAME" "$ENTITY" sala
                         xmlstarlet ed -L -s "/Package/types[name='$TYPENAME']" -t elem -n members -v "$ENTITY" package.xml
                 else
+						echo "$TYPENAME" "$ENTITY"
                         xmlstarlet ed -L -s /Package -t elem -n types -v "" package.xml
                         xmlstarlet ed -L -s '/Package/types[not(*)]' -t elem -n name -v "$TYPENAME" package.xml
                         xmlstarlet ed -L -s "/Package/types[name='$TYPENAME']" -t elem -n members -v "$ENTITY" package.xml
