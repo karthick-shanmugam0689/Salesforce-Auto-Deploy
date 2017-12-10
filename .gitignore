@@ -1,5 +1,6 @@
 # Compiled class file
 *.class
+salesforce-ant-migration-tool/deploy
 salesforce-ant-migration-tool/deploy/
 salesforce-ant-migration-tool/deploy/src/
 salesforce-ant-migration-tool/deploy/src/*
