@@ -1,6 +1,6 @@
 //First Deploy
 public class HRCIDeploymentClass {
 
-    public static String firstDeploy = 'trueyyyyyyyyyy sala';
+    public static String firstDeploy = 'trueyyyyyyyyyy salaaaaaa';
 
 }
