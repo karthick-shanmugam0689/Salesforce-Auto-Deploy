@@ -1,6 +1,6 @@
-//First Deploy
+//First Deploy For Base
 public class HRCIDeploymentClass {
-kljkjkjkjkjjhjhjhjhjhjh
-    public static String firstDeploy = 'trueyyyyyyyyyy salaaaaaahghghjhjhjhjhjhjh67676767676767676dfdfdfdfg';
 
+    public static String firstDeploy = 'Im the first deploy for base';
+	
 }
