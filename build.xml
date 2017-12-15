@@ -32,7 +32,7 @@
 
         <classpath>
 
-            <pathelement location="../ant-salesforce.jar" />                
+            <pathelement location="ant-salesforce.jar" />                
 
         </classpath>
 
@@ -40,13 +40,13 @@
 	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
-			<pathelement location="../ant-contrib-1.0b3.jar"/>
+			<pathelement location="ant-contrib-1.0b3.jar"/>
 		</classpath>
 	</taskdef>
 	
 	<taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
 		<classpath>
-			<pathelement location="../xmltask.jar"/>
+			<pathelement location="xmltask.jar"/>
 		</classpath>
 	</taskdef>
  
@@ -129,10 +129,35 @@
 
     </target>
 
-    <target name="gitDiff">
+    <target name="git-diff-deploy">
 		<delete dir="${sf.deployDir}"/>
 		<mkdir dir="${sf.deployDir}"/>
 		<copy file="${sf.samplePackageXML}" tofile="${sf.deployDir}/package.xml"/>
+		
+		<git command ="rev-parse">
+			<args>
+				<arg value="@"/>
+			</args>
+		</git>
+		<property name="latestCommit" value="${resultCommand}"/>
+		<var name="resultCommand" unset="true"/>
+		
+		<echo message="Latest Commit ${latestCommit}"/>
+		
+		<git command ="log">
+			<args>
+				<arg value="-n"/>
+				<arg value="1"/>
+				<arg value="--skip"/>
+				<arg value="1"/>
+				<arg value="--pretty=format:%H"/>
+			</args>
+		</git>
+		<property name="successCommit" value="${resultCommand}"/>
+		<var name="resultCommand" unset="true"/>
+		
+		<echo message="Successful Commit ${successCommit}"/>
+		
 		<echo message="Computing difference between the commits"/>
 		<git command = "diff-tree">
 			<args>
@@ -141,8 +166,8 @@
 				<arg value="--diff-filter=ACMRTUXB"/>
 				<arg value="-t"/>
 				<arg value="-r"/>
-				<arg value="45d30ac5db6d2c9169ab9b559c962a1ecfa7f7f0"/>
-				<arg value="cca3253b4c971dda3408a69addd2b282b1be31ae"/>
+				<arg value="${successCommit}"/>
+				<arg value="${latestCommit}"/>
 			</args>
 		</git>
 		<property name="diffFiles" value="${resultCommand}"/>
@@ -161,16 +186,16 @@
 						select="\1"
 						casesensitive="false"/>
 					<propertycopy name="packageName" from="sf.${destinationDir}"/>
-					<copy file="../@{line}" todir="${sf.deployDir}/${destinationDir}"/>
+					<copy file="@{line}" todir="${sf.deployDir}/${destinationDir}"/>
 					<if>
 						<matches string="${destinationDir}" pattern="${sf.generateMetaXML}"/>
 						<then>
-							<copy file="../@{line}-meta.xml" todir="${sf.deployDir}/${destinationDir}"/>
+							<copy file="@{line}-meta.xml" todir="${sf.deployDir}/${destinationDir}"/>
 						</then>
 					</if>
 					<xmltask source="${sf.deployDir}/package.xml" dest="${sf.deployDir}/package.xml">
-						<remove path="/Package/types[name/text()=${packageName}]"/>
-						<insert path="//*[local-name()='Package']"> <![CDATA[
+						<copy path="//*[local-name()='Package']/types[name/text()='${packageName}']/name/text()" property="xmlExists"/>
+						<insert path="//*[local-name()='Package']" unless="xmlExists"> <![CDATA[
 <types>
 	<name>${packageName}</name>
 	<members>*</members>
@@ -182,11 +207,12 @@
 			</if>
 		  </sequential>
 		</for>
+		<sf:deploy username="${sf.username.qa}" password="${sf.password.qa}" serverurl="${sf.serverurl.qa}" maxPoll="${sf.maxPoll}" deployRoot="deploy" rollbackOnError="true"/>
 	</target>
 
 	<macrodef name = "git">
 		<attribute name = "command" />
-		<attribute name = "dir" default = "../" />
+		<attribute name = "dir" default = "" />
 		<element name = "args" optional = "true" />
 		<sequential>
 			<echo message = "git @{command}"/>

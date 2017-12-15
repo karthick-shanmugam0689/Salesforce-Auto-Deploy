@@ -1,5 +1,5 @@
 //First Deploy For Base
-public class HRCIDeployment2Class {
+public class HRCIDeploymentClass2 {
 
     public static String firstDeploy = 'Im the first deploy';
 	
