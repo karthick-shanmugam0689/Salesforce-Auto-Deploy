@@ -14,11 +14,11 @@ Thanks to Jenkins and Github-Jenkins Integration plugin along with Force.com mig
 
 ### Please follow the below steps to be able to do Auto-Deployment to Salesforce
 
-1.) Configure Jenkins and install Github Integration plugin with Jenkins. Tonnes of tutorial available online to do this
+1. Configure Jenkins and install Github Integration plugin with Jenkins. Tonnes of tutorial available online to do this
 
 https://wiki.jenkins.io/display/JENKINS/Git+Plugin
 
-2.) Create a new project in Jenkins with Github repo pointing to your repository and in the Build section of the project configuration setting page select "Invoke Ant" option and set Targets to "builderWithGitDiff" and properties as below
+2. Create a new project in Jenkins with Github repo pointing to your repository and in the Build section of the project configuration setting page select "Invoke Ant" option and set Targets to "builderWithGitDiff" and properties as below
 
 ```
 env.username=[Username with which you want to deploy]
@@ -31,7 +31,7 @@ env.clientSecret=[Client Secret to connect to Salesforce instead of Username and
 env.refreshToken=[Refresh token to connect to Salesforce instead of Username and password]
 ```
 
-3.) Tadaaaa --- Now you are done with Auto-Deployment. Click on Build Now for instance deployment or enable Poll SCM to opt for auto-deployment whenever you push to GIT 
+3. Tadaaaa --- Now you are done with Auto-Deployment. Click on Build Now for instance deployment or enable Poll SCM to opt for auto-deployment whenever you push to GIT 
 
 
 Now lets see how the script works (so that in future you can modify the scripts however you want)
