@@ -1,226 +1,258 @@
-<project name="Sample usage of Salesforce Ant tasks" default="test" basedir="." xmlns:sf="antlib:com.salesforce">
-
- 
-
-    <property file="build.properties"/>
-
-    <property environment="env"/>
-
- 
-
-    <!-- Setting default value for username, password and session id properties to empty string
-
-         so unset values are treated as empty. Without this, ant expressions such as ${sf.username}
-
-         will be treated literally.
-
-    -->
-
-    <condition property="sf.username.qa" value=""> <not> <isset property="sf.username.qa"/> </not> </condition>
-
-    <condition property="sf.password.qa" value=""> <not> <isset property="sf.password.qa"/> </not> </condition>
-
-    <condition property="sf.username.dev" value=""> <not> <isset property="sf.username.dev"/> </not> </condition>
-
-    <condition property="sf.password.dev" value=""> <not> <isset property="sf.password.dev"/> </not> </condition>
-
-    <condition property="sf.sessionId" value=""> <not> <isset property="sf.sessionId"/> </not> </condition>
-
- 
-
-    <taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
-
-        <classpath>
-
-            <pathelement location="ant-salesforce.jar" />                
-
-        </classpath>
-
-    </taskdef>
+<project name="test" default="sync" xmlns:sf="antlib:com.salesforce">
+	<property environment="env"/>
+	<property name="sf.username"      value="${env.username}"/>
+	<property name="sf.password"      value="${env.password}"/>
+	<property name="sf.testClass"      value="${env.testClass}"/>
+	<property name="sf.clientId"      value="${env.clientId}"/>
+	<property name="sf.clientSecret"      value="${env.clientSecret}"/>
+	<property name="sf.refreshToken"      value="${env.refreshToken}"/>
+	<property name="sf.serverurl"      value="${env.serverurl}"/>
+	<property name="sf.branch"      value="${env.branch}"/>
 	
+	<!-- <property name="sf.fetchFromDuration"      value="${env.fetchFromDuration}"/> -->
+	<taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
+		<classpath>
+			<pathelement location="lib/ant-salesforce.jar"/>
+		</classpath>
+	</taskdef>
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
-			<pathelement location="ant-contrib-1.0b3.jar"/>
+			<pathelement location="lib/ant-contrib-1.0b3.jar"/>
 		</classpath>
 	</taskdef>
-	
 	<taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
 		<classpath>
-			<pathelement location="xmltask.jar"/>
+			<pathelement location="lib/xmltask.jar"/>
 		</classpath>
 	</taskdef>
- 
+    <macrodef name="gitDiff">
+		<sequential>
+			<exec executable="git" outputproperty="git.diff">
+				<arg value="diff" />
+				<arg value="--pretty=format:" />
+				<arg value="--name-only" />
+				<arg value="${env.GIT_COMMIT}" />
+				<arg value="${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}" />
+			</exec>
+			<echo>${git.diff}</echo>
+		</sequential>
+	</macrodef>
 
-    <!-- Retrieve an unpackaged set of metadata from your org -->
-
-    <!-- The file unpackaged/package.xml lists what is to be retrieved -->
-
-    <target name="retrieveDev">
-
-      <!-- Retrieve the contents into another directory -->
-
-      <sf:retrieve username="${sf.username.dev}" password="${sf.password.dev}" serverurl="${sf.serverurl.dev}" maxPoll="${sf.maxPoll}" retrieveTarget="retrieve" unpackaged="retrieve/package.xml"/>
-
-    </target>
-
- 
-
-    <!-- Deploy the unpackaged set of metadata retrieved with retrieveUnpackaged and run tests in this organization's namespace only-->
-
-    <target name="deployQA">
-
-      <sf:deploy username="${sf.username.qa}" password="${sf.password.qa}" serverurl="${sf.serverurl.qa}" maxPoll="${sf.maxPoll}" deployRoot="deploy" rollbackOnError="true"/>
-
-    </target>
-
- 
-
-    <!-- Shows deploying code & running tests for code in directory -->
-
-    <target name="deployCode">
-
-      <!-- Upload the contents of the "codepkg" directory, running the tests for just 1 class -->
-
-      <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="codepkg" testLevel="RunSpecifiedTests" rollbackOnError="true">
-
-                 <runTest>SampleDeployClass</runTest>
-
-      </sf:deploy>
-
-    </target>
-
-               
-
-                <!-- Shows quick deployment of recent validation. Set the property sf.recentValidationId to your recent check only deployment Id -->
-
-                <target name="quickDeploy">
-
-                  <sf:deployRecentValidation  username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" recentValidationId="${sf.recentValidationId}"/>
-
-                </target>
-
-               
-
-                <!-- Shows cancel deployment of deploy request either pending or in progress. Set property sf.requestId to Id of pending or in progress deploy request -->
-
-                <target name="cancelDeploy">
-
-                  <sf:cancelDeploy  username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" requestId="${sf.requestId}"/>
-
-                </target>
-
- 
-
-                <!-- Retrieve the information of all items of a particular metadata type -->
-
-    <target name="listMetadata">
-
-      <sf:listMetadata username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" metadataType="${sf.metadataType}"/>
-
-    </target>
-
- 
-
-                <!-- Retrieve the information on all supported metadata type -->
-
-    <target name="describeMetadata">
-
-      <sf:describeMetadata username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}"/>
-
-    </target>
-
-    <target name="git-diff-deploy">
+	<target name="diffBuilderWithGitCommit">
 		<delete dir="${sf.deployDir}"/>
 		<mkdir dir="${sf.deployDir}"/>
 		<copy file="${sf.samplePackageXML}" tofile="${sf.deployDir}/package.xml"/>
-		
-		<git command ="rev-parse">
-			<args>
-				<arg value="@"/>
-			</args>
-		</git>
-		<property name="latestCommit" value="${resultCommand}"/>
-		<var name="resultCommand" unset="true"/>
-		
-		<echo message="Latest Commit ${latestCommit}"/>
-		
-		<git command ="log">
-			<args>
-				<arg value="-n"/>
-				<arg value="1"/>
-				<arg value="--skip"/>
-				<arg value="1"/>
-				<arg value="--pretty=format:%H"/>
-			</args>
-		</git>
-		<property name="successCommit" value="${resultCommand}"/>
-		<var name="resultCommand" unset="true"/>
-		
-		<echo message="Successful Commit ${successCommit}"/>
-		
-		<echo message="Computing difference between the commits"/>
-		<git command = "diff-tree">
-			<args>
-				<arg value="--no-commit-id"/>
-				<arg value="--name-only"/>
-				<arg value="--diff-filter=ACMRTUXB"/>
-				<arg value="-t"/>
-				<arg value="-r"/>
-				<arg value="${successCommit}"/>
-				<arg value="${latestCommit}"/>
-			</args>
-		</git>
-		<property name="diffFiles" value="${resultCommand}"/>
-		<echo message="File differences between previous and current commits are"/>
-		<for param="line" list="${diffFiles}" delimiter="${line.separator}">
-		  <sequential>
+		<echo>Current GIT Commit : ${env.GIT_COMMIT}</echo>
+		<echo>Previous Known Successful GIT Commit : ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}</echo>
+		<gitDiff/>
+		<for list="${git.diff}" param="currentDiff" delimiter="${line.separator}">
+			<sequential>
+				<if>
+					<and>
+						<available file="@{currentDiff}"/>
+						<matches string="@{currentDiff}" pattern="src/"/>
+					</and>
+					<then>
+						<propertyregex
+							property="currentDiffWithoutSRC"
+							input="@{currentDiff}"
+							regexp="src\/([a-zA-Z]*\/[a-zA-Z0-9\/\.\_]*)"
+							select="\1"
+							casesensitive="true" 
+							override="true"
+							defaultValue=""/>
+						<echo>Current Component : ${currentDiffWithoutSRC}</echo>
+						<copy todir="${sf.deployDir}" verbose="false">
+							<fileset dir="src">
+								<include name="${currentDiffWithoutSRC}" />
+							</fileset>
+						</copy>
+						<if>
+							<available file="@{currentDiff}-meta.xml"/>
+							<then>
+								<echo>Generating meta-xml : @{currentDiff}</echo>
+								<copy todir="${sf.deployDir}" verbose="false">
+									<fileset dir="src">
+										<include name="${currentDiffWithoutSRC}-meta.xml" />
+									</fileset>
+								</copy>
+							</then>
+						</if>
+						<propertyregex
+							property="component"
+							input="@{currentDiff}"
+							regexp="src\/([a-zA-Z]*)\/[a-zA-Z0-9\/\.\_]*"
+							select="\1"
+							casesensitive="true" 
+							override="true"
+							defaultValue=""/>
+						<propertycopy property="packagedName" from="sf.${component}" override="true"/>
+						<echo>Generating Package.xml : ${component} with ${packagedName}</echo>
+						<xmltask source="${sf.deployDir}/package.xml" dest="${sf.deployDir}/package.xml">
+							<remove path="/Package/types[name/text()=${packagedName}]"/>
+							<insert path="//*[local-name()='Package']"> <![CDATA[
+<types>
+<name>${packagedName}</name>
+<members>*</members>
+</types>
+							]]>
+							</insert>
+						</xmltask>
+					</then>
+				</if>
+			</sequential>
+		</for>
+    </target>
+
+	<property file="build.properties"/>
+	
+    <target name="ret">
+    	<mkdir dir="src"/>
+    	<sf:retrieve username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="src" unpackaged="package.xml"/>
+    </target>
+
+    <target name="deploy">
+		<echo>Deployment Begins...</echo>
+		<if>
+			<and><isset property="${sf.testClass}"/> </and>
+			<then>
+				<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true" testLevel="RunSpecifiedTests">
+					<for param="line" list="${sf.testClass}" delimiter=",">
+						<sequential>
+							<runTest>@{line}</runTest>
+						</sequential>
+					</for>
+				</sf:deploy>
+			</then>
+			<else>
+				<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true"/>
+			</else>
+		</if>
+    	
+    </target>
+	
+	<target name="getSessionId">
+    	<exec executable="curl" outputproperty="curl.result">
+			<arg line="-X POST ${sf.serverurl}/services/oauth2/token?grant_type=refresh_token&amp;client_id=${sf.clientId}&amp;client_secret=${sf.clientSecret}&amp;refresh_token=${sf.refreshToken}"/>
+		</exec>
+		<echo>${curl.result}</echo>
+		<for param="line" list="${curl.result}" delimiter="${line.separator}">
+		 <sequential>
 			<if>
-				<matches pattern="${sf.srcDirFile}" string="@{line}"/>
+				<matches pattern="${response.regex}" string="@{line}"/>
 				<then>
-					<echo message="@{line}"/>
-					<echo message="Creating a copy of above file in deploy directory"/>
 					<propertyregex
-						property="destinationDir"
+						property="accessToken"
 						input="@{line}"
-						regexp="${sf.destDir}"
+						regexp="${response.regex}"
 						select="\1"
 						casesensitive="false"/>
-					<propertycopy name="packageName" from="sf.${destinationDir}"/>
-					<copy file="@{line}" todir="${sf.deployDir}/${destinationDir}"/>
-					<if>
-						<matches string="${destinationDir}" pattern="${sf.generateMetaXML}"/>
-						<then>
-							<copy file="@{line}-meta.xml" todir="${sf.deployDir}/${destinationDir}"/>
-						</then>
-					</if>
-					<xmltask source="${sf.deployDir}/package.xml" dest="${sf.deployDir}/package.xml">
-						<copy path="//*[local-name()='Package']/types[name/text()='${packageName}']/name/text()" property="xmlExists"/>
-						<insert path="//*[local-name()='Package']" unless="xmlExists"> <![CDATA[
-<types>
-	<name>${packageName}</name>
-	<members>*</members>
-</types>
-						]]>
-						</insert>
-					</xmltask>
 				</then>
 			</if>
 		  </sequential>
 		</for>
-		<sf:deploy username="${sf.username.qa}" password="${sf.password.qa}" serverurl="${sf.serverurl.qa}" maxPoll="${sf.maxPoll}" deployRoot="deploy" rollbackOnError="true"/>
-	</target>
+		<echo>Access Token Obtained From Salesforce :  ${accessToken}</echo>
+    </target>
+	
+	<target name="deployProd" depends="getSessionId">
+		<echo>Deployment Begins...</echo>
+		<echo>${sf.testClass}</echo>
+		<if>
+			<isset property="sf.testClass"/>
+			<then>
+			<script language="javascript"><![CDATA[
+			var deployTask = project.createTask('antlib:com.salesforce:deploy');
+			deployTask.setSessionId(project.getProperty("accessToken"));
+			deployTask.setServerURL(project.getProperty("sf.serverurl"));
+			deployTask.setDeployRoot(project.getProperty("sf.deployDir"));
+			deployTask.setTestLevel('RunSpecifiedTests');
+			deployTask.setMaxPoll(project.getProperty("sf.maxPoll"));
+			var tests = project.getProperty("sf.testClass");
+			if (tests) {
+			  deployTask.setTestLevel('RunSpecifiedTests');
+			  tests = tests.split(',');
+			  for (var i = 0; i < tests.length; i++) {
+				var runTest = java.lang.Class.forName(
+				  "com.salesforce.ant.DeployTask$CodeNameElement"
+				).newInstance();
+				runTest.addText(tests[i]);
+				deployTask.addRunTest(runTest);
+			  }
+			}
+			deployTask.perform();
+		  ]]></script>
+			<!--<sf:deploy sessionId="${accessToken}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true" testLevel="RunSpecifiedTests">
+					<for param="line" list="${sf.testClass}" delimiter=",">
+						<sequential>
+							<runTest>@{line}</runTest>
+						</sequential>
+					</for>
+				</sf:deploy>-->
+			</then>
+			<else>
+				<echo level="error">
+					Test class not specified
+				</echo>
+			</else>
+		</if>
+		
+    	
+    </target>
+	
+	<target name="validateProd" depends="getSessionId">
+		<echo>Deployment Begins...</echo>
+		<echo>${sf.testClass}</echo>
+		<if>
+			<isset property="sf.testClass"/>
+			<then>
+			<script language="javascript"><![CDATA[
+			var deployTask = project.createTask('antlib:com.salesforce:deploy');
+			deployTask.setSessionId(project.getProperty("accessToken"));
+			deployTask.setServerURL(project.getProperty("sf.serverurl"));
+			deployTask.setDeployRoot(project.getProperty("sf.deployDir"));
+			deployTask.setCheckonly(true);
+			deployTask.setTestLevel('RunSpecifiedTests');
+			deployTask.setMaxPoll(project.getProperty("sf.maxPoll"));
+			var tests = project.getProperty("sf.testClass");
+			if (tests) {
+			  deployTask.setTestLevel('RunSpecifiedTests');
+			  tests = tests.split(',');
+			  for (var i = 0; i < tests.length; i++) {
+				var runTest = java.lang.Class.forName(
+				  "com.salesforce.ant.DeployTask$CodeNameElement"
+				).newInstance();
+				runTest.addText(tests[i]);
+				deployTask.addRunTest(runTest);
+			  }
+			}
+			deployTask.perform();
+		  ]]></script>
+			<!--<sf:deploy sessionId="${accessToken}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true" testLevel="RunSpecifiedTests">
+					<for param="line" list="${sf.testClass}" delimiter=",">
+						<sequential>
+							<runTest>@{line}</runTest>
+						</sequential>
+					</for>
+				</sf:deploy>-->
+			</then>
+			<else>
+				<echo level="error">
+					Test class not specified
+				</echo>
+			</else>
+		</if>
+		
+    	
+    </target>
 
-	<macrodef name = "git">
-		<attribute name = "command" />
-		<attribute name = "dir" default = "" />
-		<element name = "args" optional = "true" />
-		<sequential>
-			<echo message = "git @{command}"/>
-			<exec executable = "git" dir = "@{dir}" outputproperty = "resultCommand">
-							<arg value = "@{command}" />
-							<args/>
-			</exec>
-		</sequential>
-	</macrodef>
-
+	<target name="builderWithGitDiff" depends="diffBuilderWithGitCommit,deploy">
+		
+    </target>
+	
+	<target name="builderProd" depends="diffBuilderWithGitCommit,deployProd">
+		
+    </target>
+	<target name="builderValidateProd" depends="diffBuilderWithGitCommit,validateProd">
+		
+    </target>
 </project>
