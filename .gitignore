@@ -1,1 +1,13 @@
-deploy/
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+/deploy-sf
+
+/deploy-sf/
+
+
+deploy-sf/
+
+salesforce.schema
+.settings
+.settings/
+.project
