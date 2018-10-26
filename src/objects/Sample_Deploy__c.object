@@ -6,6 +6,6 @@
         <label>Sample Deploy Name</label>
         <type>Text</type>
     </nameField>
-    <pluralLabel>myobjs</pluralLabel>
+    <pluralLabel>Sample Deploys</pluralLabel>
     <sharingModel>ReadWrite</sharingModel>
 </CustomObject>
