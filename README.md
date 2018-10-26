@@ -8,6 +8,8 @@ There are tonnes of libraries waiting outside for us to use them to elivate our 
 
 I have introduced a new tool with the help of ANT which can be used with Jenkins and GitHub integration plugin for Jenkins with almost zero-configurations required from your side
 
+Repo URL : https://github.com/karthick-shanmugam0689/Salesforce-Auto-Deploy
+
 For you to do Auto-Deployment with Git-Jenkins, just I recommend you to fork this repo and use the scripts, how and ever you want.
 
 Thanks to Jenkins and Github-Jenkins Integration plugin along with Force.com migration tool to have more features to be used.
