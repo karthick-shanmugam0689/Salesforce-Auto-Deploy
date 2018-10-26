@@ -61,7 +61,7 @@ The git plugin sets several environment variables you can use in your scripts:
 **GIT_AUTHOR_EMAIL and GIT_COMMITTER_EMAIL** - The email entered if the "Custom user name/e-mail address" behaviour is enabled; falls back to the value entered in the Jenkins system config under "Global Config user.email Value" (if any)
 
 
-###Lets visit the folder-structure in our git repo to understand the process
+### Lets visit the folder-structure in our git repo to understand the process
 
 **lib** folder --> Tools enabling this auto-deployment process to work without any issues
           ant-contrib-1.0b3.jar --> For basic ant operations to support deployment process
