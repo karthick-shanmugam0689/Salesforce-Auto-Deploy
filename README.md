@@ -93,6 +93,8 @@ The git plugin sets several environment variables you can use in your scripts:
          Validates the package in Salesforce with all the environmental variales used above along with running of test classes
 
 
+As of now deployProd and validateProd commands are running with ClientId and Client Secret since most of the times we wish not to expose the username and password to the Prod environment, but you can change it if you want to
+
 ### Now lets see the properties in build.properties as you might need to know this as well if you want to change the configurations for yourself
 ```
 sf.maxPoll = [maximum polling time to connect to Salesforce]
