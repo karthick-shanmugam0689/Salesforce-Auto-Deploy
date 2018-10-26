@@ -1,4 +1,4 @@
-Hi Salesforce Devs,
+#Hi Salesforce Devs,
 
 Welcome to Auto-Deployment Process with respect to Salesforce. For sure once in our lifetime when working with Salesforce, we might have faced issues with deployment because of which we will sought the help of third party libraries or systems to help in deployment process (which is sometimes costlier)
 
@@ -12,7 +12,7 @@ For you to do Auto-Deployment with Git-Jenkins, just I recommend you to fork thi
 
 Thanks to Jenkins and Github-Jenkins Integration plugin along with Force.com migration tool to have more features to be used.
 
-Please follow the below steps to be able to do Auto-Deployment to Salesforce
+###Please follow the below steps to be able to do Auto-Deployment to Salesforce
 
 1.) Configure Jenkins and install Github Integration plugin with Jenkins. Tonnes of tutorial available online to do this
 
@@ -33,7 +33,7 @@ Now lets see how the script works (so that in future you can modify the scripts 
 Before that just get to know about environmental variables offered by GITHUB-Jenkins integration plugin to do this
 
 
-Environment variables
+###Environment variables
 The git plugin sets several environment variables you can use in your scripts:
 
 GIT_COMMIT - SHA of the current
@@ -46,7 +46,7 @@ GIT_URL_N - Repository remote URLs when there are more than 1 remotes, e.g. GIT_
 GIT_AUTHOR_NAME and GIT_COMMITTER_NAME - The name entered if the "Custom user name/e-mail address" behaviour is enabled; falls back to the value entered in the Jenkins system config under "Global Config user.name Value" (if any)
 GIT_AUTHOR_EMAIL and GIT_COMMITTER_EMAIL - The email entered if the "Custom user name/e-mail address" behaviour is enabled; falls back to the value entered in the Jenkins system config under "Global Config user.email Value" (if any)
 
-Lets visit the folder-structure in our git repo to understand the process
+###Lets visit the folder-structure in our git repo to understand the process
 
 lib folder --> Tools enabling this auto-deployment process to work without any issues
           ant-contrib-1.0b3.jar --> For basic ant operations to support deployment process
@@ -59,7 +59,7 @@ build.properties --> basic properties, configurations required for auto-deployme
 
 samplePackage.xml --> sample package.xml to use for auto-deployment
 
-Now lets visit the build.xml file to see how the script works (It is the starting point and it the main part in our deployment process)
+###Now lets visit the build.xml file to see how the script works (It is the starting point and it the main part in our deployment process)
 
 builderWithGitDiff --> 
          Takes the file-differences between GIT_PREVIOUS_SUCCESSFUL_COMMIT and GIT_COMMIT. 
@@ -78,7 +78,7 @@ validateProd -->
          Validates the package in Salesforce with all the environmental variales used above along with running of test classes
 
 
-Now lets see the properties in build.properties as you might need to know this as well if you want to change the configurations for yourself
+###Now lets see the properties in build.properties as you might need to know this as well if you want to change the configurations for yourself
 
 sf.maxPoll = [maximum polling time to connect to Salesforce]
 
