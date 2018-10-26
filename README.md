@@ -38,7 +38,7 @@ The git plugin sets several environment variables you can use in your scripts:
 
 GIT_COMMIT - SHA of the current
 GIT_BRANCH - Name of the remote repository (defaults to origin), followed by name of the branch currently being used, e.g. "origin/master" or "origin/foo"
-GIT_LOCAL_BRANCH - Name of the branch on Jenkins. When the "checkout to specific local branch" behavior is configured, the variable is published.  If the behavior is configured as null or **, the property will contain the resulting local branch name sans the remote name. 
+GIT_LOCAL_BRANCH - Name of the branch on Jenkins. When the "checkout to specific local branch" behavior is configured, the variable is published.  If the behavior is configured as null or **, the property will contain the resulting local branch name sans the remote name.
 GIT_PREVIOUS_COMMIT - SHA of the previous built commit from the same branch (not set on first build on a branch)
 GIT_PREVIOUS_SUCCESSFUL_COMMIT - SHA of the previous successfully built commit from the same branch (not set on first build on a branch)
 GIT_URL - Repository remote URL
