@@ -2,12 +2,12 @@
 	<property environment="env"/>
 	<property name="sf.username"      value="${env.username}"/>
 	<property name="sf.password"      value="${env.password}"/>
-	<property name="sf.testClass"      value="${env.testClass}"/>
 	<property name="sf.clientId"      value="${env.clientId}"/>
 	<property name="sf.clientSecret"      value="${env.clientSecret}"/>
 	<property name="sf.refreshToken"      value="${env.refreshToken}"/>
 	<property name="sf.serverurl"      value="${env.serverurl}"/>
 	<property name="sf.branch"      value="${env.branch}"/>
+	<property name="canDeploy" value="false"/>
 	
 	<!-- <property name="sf.fetchFromDuration"      value="${env.fetchFromDuration}"/> -->
 	<taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
@@ -51,53 +51,106 @@
 					<and>
 						<available file="@{currentDiff}"/>
 						<matches string="@{currentDiff}" pattern="src/"/>
+						<not>
+						      <matches string="@{currentDiff}" pattern="package.xml"/>
+						</not>
 					</and>
 					<then>
-						<propertyregex
-							property="currentDiffWithoutSRC"
-							input="@{currentDiff}"
-							regexp="src\/([a-zA-Z]*\/[a-zA-Z0-9\/\.\_]*)"
-							select="\1"
-							casesensitive="true" 
-							override="true"
-							defaultValue=""/>
-						<echo>Current Component : ${currentDiffWithoutSRC}</echo>
-						<copy todir="${sf.deployDir}" verbose="false">
-							<fileset dir="src">
-								<include name="${currentDiffWithoutSRC}" />
-							</fileset>
-						</copy>
 						<if>
-							<available file="@{currentDiff}-meta.xml"/>
+							<matches string="@{currentDiff}" pattern="src/aura/"/>
 							<then>
-								<echo>Generating meta-xml : @{currentDiff}</echo>
+								<propertyregex
+									property="auraFolder"
+									input="@{currentDiff}"
+									regexp="src\/aura\/([a-zA-Z\_]*)\/[a-zA-Z0-9\/\.\_]*"
+									select="\1"
+									casesensitive="true" 
+									override="true"
+									defaultValue=""/>
+								<if>
+									<not>
+										<available file="${sf.deployDir}/aura/${auraFolder}" type="dir"/>
+									</not>
+									<then>
+										<echo>Current Component : ${auraFolder}</echo>
+										<copy todir="${sf.deployDir}" verbose="false">
+											<fileset dir="src">
+												<include name="aura/${auraFolder}/**" />
+											</fileset>
+										</copy>
+										<propertyregex
+											property="component"
+											input="@{currentDiff}"
+											regexp="src\/([a-zA-Z]*)\/[a-zA-Z0-9\/\.\_]*"
+											select="\1"
+											casesensitive="true" 
+											override="true"
+											defaultValue=""/>
+										<propertycopy property="packagedName" from="sf.${component}" override="true"/>
+										<echo>Generating Package.xml : ${component} with ${packagedName}</echo>
+										<xmltask source="${sf.deployDir}/package.xml" dest="${sf.deployDir}/package.xml">
+											<remove path="/Package/types[name/text()=${packagedName}]"/>
+											<insert path="//*[local-name()='Package']"> <![CDATA[
+				<types>
+				<name>${packagedName}</name>
+				<members>*</members>
+				</types>
+											]]>
+											</insert>
+										</xmltask>
+									</then> 
+								</if>
+							</then>
+							<else>
+								<propertyregex
+									property="currentDiffWithoutSRC"
+									input="@{currentDiff}"
+									regexp="src\/([a-zA-Z]*\/[a-zA-Z0-9\/\.\_]*)"
+									select="\1"
+									casesensitive="true" 
+									override="true"
+									defaultValue=""/>
+								<echo>Current Component : ${currentDiffWithoutSRC}</echo>
 								<copy todir="${sf.deployDir}" verbose="false">
 									<fileset dir="src">
-										<include name="${currentDiffWithoutSRC}-meta.xml" />
+										<include name="${currentDiffWithoutSRC}" />
 									</fileset>
 								</copy>
-							</then>
+								<if>
+									<available file="@{currentDiff}-meta.xml"/>
+									<then>
+										<echo>Generating meta-xml : @{currentDiff}</echo>
+										<copy todir="${sf.deployDir}" verbose="false">
+											<fileset dir="src">
+												<include name="${currentDiffWithoutSRC}-meta.xml" />
+											</fileset>
+										</copy>
+									</then>
+								</if>
+								<propertyregex
+									property="component"
+									input="@{currentDiff}"
+									regexp="src\/([a-zA-Z]*)\/[a-zA-Z0-9\/\.\_]*"
+									select="\1"
+									casesensitive="true" 
+									override="true"
+									defaultValue=""/>
+								<propertycopy property="packagedName" from="sf.${component}" override="true"/>
+								<echo>Generating Package.xml : ${component} with ${packagedName}</echo>
+								<xmltask source="${sf.deployDir}/package.xml" dest="${sf.deployDir}/package.xml">
+									<remove path="/Package/types[name/text()=${packagedName}]"/>
+									<insert path="//*[local-name()='Package']"> <![CDATA[
+		<types>
+		<name>${packagedName}</name>
+		<members>*</members>
+		</types>
+									]]>
+									</insert>
+								</xmltask> 
+							</else>
 						</if>
-						<propertyregex
-							property="component"
-							input="@{currentDiff}"
-							regexp="src\/([a-zA-Z]*)\/[a-zA-Z0-9\/\.\_]*"
-							select="\1"
-							casesensitive="true" 
-							override="true"
-							defaultValue=""/>
-						<propertycopy property="packagedName" from="sf.${component}" override="true"/>
-						<echo>Generating Package.xml : ${component} with ${packagedName}</echo>
-						<xmltask source="${sf.deployDir}/package.xml" dest="${sf.deployDir}/package.xml">
-							<remove path="/Package/types[name/text()=${packagedName}]"/>
-							<insert path="//*[local-name()='Package']"> <![CDATA[
-<types>
-<name>${packagedName}</name>
-<members>*</members>
-</types>
-							]]>
-							</insert>
-						</xmltask>
+						<var name="canDeploy" unset="true"/>
+						<property name="canDeploy" value="true"/>
 					</then>
 				</if>
 			</sequential>
@@ -114,21 +167,14 @@
     <target name="deploy">
 		<echo>Deployment Begins...</echo>
 		<if>
-			<and><isset property="${sf.testClass}"/> </and>
+			<and><equals arg1="${canDeploy}" arg2="true"/> </and>
 			<then>
-				<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true" testLevel="RunSpecifiedTests">
-					<for param="line" list="${sf.testClass}" delimiter=",">
-						<sequential>
-							<runTest>@{line}</runTest>
-						</sequential>
-					</for>
-				</sf:deploy>
+				<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true"/>
 			</then>
 			<else>
-				<sf:deploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true"/>
+				<echo>Nothing to deploy</echo>
 			</else>
 		</if>
-    	
     </target>
 	
 	<target name="getSessionId">
@@ -156,93 +202,73 @@
 	
 	<target name="deployProd" depends="getSessionId">
 		<echo>Deployment Begins...</echo>
-		<echo>${sf.testClass}</echo>
 		<if>
-			<isset property="sf.testClass"/>
+			<and><equals arg1="${canDeploy}" arg2="true"/> </and>
 			<then>
-			<script language="javascript"><![CDATA[
-			var deployTask = project.createTask('antlib:com.salesforce:deploy');
-			deployTask.setSessionId(project.getProperty("accessToken"));
-			deployTask.setServerURL(project.getProperty("sf.serverurl"));
-			deployTask.setDeployRoot(project.getProperty("sf.deployDir"));
-			deployTask.setTestLevel('RunSpecifiedTests');
-			deployTask.setMaxPoll(project.getProperty("sf.maxPoll"));
-			var tests = project.getProperty("sf.testClass");
-			if (tests) {
-			  deployTask.setTestLevel('RunSpecifiedTests');
-			  tests = tests.split(',');
-			  for (var i = 0; i < tests.length; i++) {
-				var runTest = java.lang.Class.forName(
-				  "com.salesforce.ant.DeployTask$CodeNameElement"
-				).newInstance();
-				runTest.addText(tests[i]);
-				deployTask.addRunTest(runTest);
-			  }
-			}
-			deployTask.perform();
-		  ]]></script>
-			<!--<sf:deploy sessionId="${accessToken}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true" testLevel="RunSpecifiedTests">
-					<for param="line" list="${sf.testClass}" delimiter=",">
-						<sequential>
-							<runTest>@{line}</runTest>
-						</sequential>
-					</for>
-				</sf:deploy>-->
+				<fail message="Test Class Not Specified" unless="env.testClass"/>
+				<echo>${env.testClass}</echo>
+				<script language="javascript"><![CDATA[
+				var deployTask = project.createTask('antlib:com.salesforce:deploy');
+				deployTask.setSessionId(project.getProperty("accessToken"));
+				deployTask.setServerURL(project.getProperty("sf.serverurl"));
+				deployTask.setDeployRoot(project.getProperty("sf.deployDir"));
+				deployTask.setTestLevel('RunSpecifiedTests');
+				deployTask.setMaxPoll(project.getProperty("sf.maxPoll"));
+				var tests = project.getProperty("env.testClass");
+				if (tests) {
+					deployTask.setTestLevel('RunSpecifiedTests');
+					tests = tests.split(',');
+					for (var i = 0; i < tests.length; i++) {
+						var runTest = java.lang.Class.forName(
+						"com.salesforce.ant.DeployTask$CodeNameElement"
+						).newInstance();
+						runTest.addText(tests[i]);
+						deployTask.addRunTest(runTest);
+					}
+					deployTask.perform();
+				}
+				]]></script>
 			</then>
 			<else>
-				<echo level="error">
-					Test class not specified
-				</echo>
+				<echo>Nothing to deploy</echo>
 			</else>
 		</if>
-		
-    	
     </target>
 	
 	<target name="validateProd" depends="getSessionId">
-		<echo>Deployment Begins...</echo>
-		<echo>${sf.testClass}</echo>
+		<echo>Validation Begins...</echo>
 		<if>
-			<isset property="sf.testClass"/>
+			<and><equals arg1="${canDeploy}" arg2="true"/> </and>
 			<then>
-			<script language="javascript"><![CDATA[
-			var deployTask = project.createTask('antlib:com.salesforce:deploy');
-			deployTask.setSessionId(project.getProperty("accessToken"));
-			deployTask.setServerURL(project.getProperty("sf.serverurl"));
-			deployTask.setDeployRoot(project.getProperty("sf.deployDir"));
-			deployTask.setCheckonly(true);
-			deployTask.setTestLevel('RunSpecifiedTests');
-			deployTask.setMaxPoll(project.getProperty("sf.maxPoll"));
-			var tests = project.getProperty("sf.testClass");
-			if (tests) {
-			  deployTask.setTestLevel('RunSpecifiedTests');
-			  tests = tests.split(',');
-			  for (var i = 0; i < tests.length; i++) {
-				var runTest = java.lang.Class.forName(
-				  "com.salesforce.ant.DeployTask$CodeNameElement"
-				).newInstance();
-				runTest.addText(tests[i]);
-				deployTask.addRunTest(runTest);
-			  }
-			}
-			deployTask.perform();
-		  ]]></script>
-			<!--<sf:deploy sessionId="${accessToken}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="${sf.deployDir}" rollbackOnError="true" testLevel="RunSpecifiedTests">
-					<for param="line" list="${sf.testClass}" delimiter=",">
-						<sequential>
-							<runTest>@{line}</runTest>
-						</sequential>
-					</for>
-				</sf:deploy>-->
+				<fail message="Test Class Not Specified" unless="env.testClass"/>
+				<echo>${env.testClass}</echo>
+				<script language="javascript"><![CDATA[
+				var deployTask = project.createTask('antlib:com.salesforce:deploy');
+				deployTask.setSessionId(project.getProperty("accessToken"));
+				deployTask.setServerURL(project.getProperty("sf.serverurl"));
+				deployTask.setDeployRoot(project.getProperty("sf.deployDir"));
+				deployTask.setCheckonly(true);
+				deployTask.setTestLevel('RunSpecifiedTests');
+				deployTask.setMaxPoll(project.getProperty("sf.maxPoll"));
+				var tests = project.getProperty("env.testClass");
+				if (tests) {
+					deployTask.setTestLevel('RunSpecifiedTests');
+					tests = tests.split(',');
+					for (var i = 0; i < tests.length; i++) {
+						var runTest = java.lang.Class.forName(
+						"com.salesforce.ant.DeployTask$CodeNameElement"
+						).newInstance();
+						runTest.addText(tests[i]);
+						deployTask.addRunTest(runTest);
+					}
+					deployTask.perform();
+				}
+				]]></script>
 			</then>
 			<else>
-				<echo level="error">
-					Test class not specified
-				</echo>
+				<echo>Nothing to deploy</echo>
 			</else>
 		</if>
-		
-    	
     </target>
 
 	<target name="builderWithGitDiff" depends="diffBuilderWithGitCommit,deploy">
