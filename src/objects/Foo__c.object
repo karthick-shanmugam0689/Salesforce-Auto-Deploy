@@ -140,49 +140,6 @@
         <type>Phone</type>
     </fields>
     <fields>
-        <fullName>PicklistMultiSelect__c</fullName>
-        <externalId>false</externalId>
-        <label>Picklist Multi Select</label>
-        <picklist>
-            <picklistValues>
-                <fullName>Bar 1</fullName>
-                <default>false</default>
-            </picklistValues>
-            <picklistValues>
-                <fullName>Bar 2</fullName>
-                <default>false</default>
-            </picklistValues>
-            <picklistValues>
-                <fullName>Bar 3</fullName>
-                <default>false</default>
-            </picklistValues>
-            <sorted>false</sorted>
-        </picklist>
-        <required>false</required>
-        <trackTrending>false</trackTrending>
-        <type>MultiselectPicklist</type>
-        <visibleLines>3</visibleLines>
-    </fields>
-    <fields>
-        <fullName>Picklist__c</fullName>
-        <externalId>false</externalId>
-        <label>Picklist</label>
-        <picklist>
-            <picklistValues>
-                <fullName>Bar 1</fullName>
-                <default>false</default>
-            </picklistValues>
-            <picklistValues>
-                <fullName>Bar 2</fullName>
-                <default>false</default>
-            </picklistValues>
-            <sorted>false</sorted>
-        </picklist>
-        <required>false</required>
-        <trackTrending>false</trackTrending>
-        <type>Picklist</type>
-    </fields>
-    <fields>
         <fullName>Text__c</fullName>
         <externalId>false</externalId>
         <label>Text</label>
